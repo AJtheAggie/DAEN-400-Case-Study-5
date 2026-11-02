@@ -8,11 +8,8 @@ Some features to explore are:
 *Housing Features*
 
 1) House size
-
 2) Historical Pricing Index
-
 3)Number of bedrooms and bathrooms
-
 4)Family types
 
 *Location*
