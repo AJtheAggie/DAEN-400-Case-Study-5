@@ -5,10 +5,22 @@ In this case study we take a look at housing prices, crime rates, demographics, 
 
 Some features to explore are:
 
+*Housing Features*
+
 1) House size
 
-2) Crime rates
+2) Historical Pricing Index
 
-3)Demographics
+3)Number of bedrooms and bathrooms
 
-4) Inflation changes(CPI)
+4)Family types
+
+*Location*
+1) Crime rates
+2) Schools nearby
+3) Environment risks
+
+*Demographics*
+
+1)Population growth
+2)Migration patterns(CENSUS)
