@@ -18,6 +18,5 @@ Some features to explore are:
 3) Environment risks
 
 *Demographics*
-
 1)Population growth
 2)Migration patterns(CENSUS)
