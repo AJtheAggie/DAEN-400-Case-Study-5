@@ -1,0 +1,130 @@
+# ---------------------------------------------------------------------------
+# Housing case study – batch ingestion config
+# Everything that varies between runs or between cities lives here.
+# Adding / removing a metro = editing this file only. No code changes.
+# ---------------------------------------------------------------------------
+
+start_date: "2000-01-01"        # earliest observation kept from any source
+
+paths:
+  raw: data/raw                 # untouched downloads, one folder per run date
+  processed: data/processed     # clean, tidy tables used for modeling
+
+# ---------------------------------------------------------------------------
+# Study areas. The ZIP universe for each metro is derived from Zillow's
+# "Metro" + "State" columns, then reused to filter every other source,
+# so all sources describe exactly the same set of ZIPs.
+#   zillow_metro : exact value of Zillow's Metro column
+#   state        : 2-letter state; guards against same-named metros elsewhere
+#   cbsa         : Census CBSA code (used by Realtor.com metro files + FRED IDs)
+#   counties     : optional list of Zillow CountyName values to keep. Empty = whole
+#                  metro. NOTE: the LA metro includes Orange County and the San Jose
+#                  metro includes San Benito County; e.g. ["Los Angeles County"]
+#                  restricts LA to LA County only.
+#   extra_zips / exclude_zips : manual overrides if you want to tweak the set
+# ---------------------------------------------------------------------------
+metros:
+  los_angeles:
+    label: "Los Angeles, CA"
+    zillow_metro: "Los Angeles-Long Beach-Anaheim, CA"
+    state: CA
+    cbsa: "31080"
+    extra_zips: []
+    exclude_zips: []
+    counties: []
+  san_jose:
+    label: "San Jose, CA"
+    zillow_metro: "San Jose-Sunnyvale-Santa Clara, CA"
+    state: CA
+    cbsa: "41940"
+    extra_zips: []
+    exclude_zips: []
+    counties: []
+  college_station:
+    label: "College Station-Bryan, TX"
+    zillow_metro: "College Station-Bryan, TX"
+    state: TX
+    cbsa: "17780"
+    extra_zips: []
+    exclude_zips: []
+    counties: []
+
+# ---------------------------------------------------------------------------
+# Zillow Research bulk CSVs (no key). Zillow occasionally renames these;
+# if a download 404s, grab the new link from https://www.zillow.com/research/data/
+# ---------------------------------------------------------------------------
+zillow:
+  base_url: "https://files.zillowstatic.com/research/public_csvs"
+  datasets:
+    zhvi_all_homes:   "zhvi/Zip_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+    zhvi_sfr:         "zhvi/Zip_zhvi_uc_sfr_tier_0.33_0.67_sm_sa_month.csv"
+    zhvi_3bed:        "zhvi/Zip_zhvi_bdrmcnt_3_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+    zhvi_4bed:        "zhvi/Zip_zhvi_bdrmcnt_4_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+    zori_all_homes:   "zori/Zip_zori_uc_sfrcondomfr_sm_month.csv"
+  # dataset used to define the ZIP universe (broadest coverage)
+  universe_dataset: zhvi_all_homes
+
+# ---------------------------------------------------------------------------
+# Realtor.com Research bulk CSVs (no key)
+# ---------------------------------------------------------------------------
+realtor:
+  base_url: "https://econdata.s3-us-west-2.amazonaws.com/Reports"
+  datasets:
+    inventory_zip:   "Core/RDC_Inventory_Core_Metrics_Zip_History.csv"
+    inventory_metro: "Core/RDC_Inventory_Core_Metrics_Metro_History.csv"
+    hotness_zip:     "Hotness/RDC_Inventory_Hotness_Metrics_Zip_History.csv"
+  # square footage used for the option-B price estimate (ppsf * sqft)
+  target_sqft: 2500
+
+# ---------------------------------------------------------------------------
+# FRED API (free key -> FRED_API_KEY in .env)
+# Series that fail to resolve are logged in the run manifest, not fatal.
+# ---------------------------------------------------------------------------
+fred:
+  base_url: "https://api.stlouisfed.org/fred"
+  national:
+    MORTGAGE30US: "30-yr fixed mortgage rate (weekly)"
+    MORTGAGE15US: "15-yr fixed mortgage rate (weekly)"
+    CPIAUCSL:     "CPI-U, all items, SA (monthly)"
+  by_metro:
+    los_angeles:
+      # FHFA has no single LA-metro index (the metro is split into two divisions),
+      # so the HPI and county income for LA are attached per county below.
+      LXXRSA:                "Case-Shiller LA home price index, SA (monthly)"
+      MEDLISPRIPERSQUFEE31080: "Realtor.com median list price per sqft, LA MSA"
+    san_jose:
+      ATNHPIUS41940Q:        "FHFA all-transactions HPI, San Jose MSA (quarterly)"
+      SFXRSA:                "Case-Shiller San Francisco index, SA (closest CS proxy for SJ)"
+      MHICA06085A052NCEN:    "Median household income, Santa Clara County (annual)"
+      MEDLISPRIPERSQUFEE41940: "Realtor.com median list price per sqft, San Jose MSA"
+    college_station:
+      ATNHPIUS17780Q:        "FHFA all-transactions HPI, College Station-Bryan MSA (quarterly)"
+      MHITX48041A052NCEN:    "Median household income, Brazos County (annual)"
+      MEDLISPRIPERSQUFEE17780: "Realtor.com median list price per sqft, College Station MSA"
+  # Series attached by ZIP county (Zillow CountyName). Same generic column names as
+  # by_metro (fhfa_hpi, county_median_hh_income); a county value overrides the
+  # metro value for ZIPs in that county.
+  by_county:
+    "Los Angeles County":
+      ATNHPIUS31084Q:        "FHFA all-transactions HPI, LA-Long Beach-Glendale MSAD (quarterly)"
+      MHICA06037A052NCEN:    "Median household income, Los Angeles County (annual)"
+    "Orange County":
+      ATNHPIUS11244Q:        "FHFA all-transactions HPI, Anaheim-Santa Ana-Irvine MSAD (quarterly)"
+      MHICA06059A052NCEN:    "Median household income, Orange County (annual)"
+
+# ---------------------------------------------------------------------------
+# Census (key optional but recommended -> CENSUS_API_KEY in .env)
+# ACS 5-year ZCTA estimates + Gazetteer land area => population density.
+# Years are tried newest-first; first one that responds is used.
+# ---------------------------------------------------------------------------
+census:
+  acs_years: [2024, 2023, 2022]
+  acs_variables:
+    B01003_001E: population
+    B19013_001E: median_household_income
+    B25077_001E: median_home_value
+    B25064_001E: median_gross_rent
+    B25003_001E: occupied_units
+    B25003_002E: owner_occupied_units
+  gazetteer_years: [2024, 2023]
+  gazetteer_url: "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/{year}_Gazetteer/{year}_Gaz_zcta_national.zip"
