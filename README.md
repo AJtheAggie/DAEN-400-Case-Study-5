@@ -99,6 +99,10 @@ averaged to monthly. Quarterly FHFA and annual county income are forward-filled.
 series get generic names (`fhfa_hpi`, `county_median_hh_income`, `metro_list_ppsf`,
 `case_shiller_sa`) so all three metros stack in one column.
 
+
+## Hotness Metric 
+....
+
 ## Known caveats (put these in your report)
 
 1. **`est_list_price_2500sqft` is a list-price estimate**: ZIP median $/sqft × 2500.
