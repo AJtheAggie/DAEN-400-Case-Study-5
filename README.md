@@ -22,6 +22,9 @@ Some features to explore are:
 2)Migration patterns(CENSUS)
 
 
+# Analysis script (FOR GRADER)
+The critical piece of analysis is conducted in the data_analysis_corrected file (version control duplicated the 2 and we wanted to keep the source file here for reference).
+
 # Housing Case Study – Batch Ingestion Pipeline
 
 Pulls Zillow, Realtor.com, FRED and Census data for **Los Angeles, San Jose (CA) and
@@ -101,7 +104,7 @@ series get generic names (`fhfa_hpi`, `county_median_hh_income`, `metro_list_pps
 
 
 ## Hotness Metric 
-....
+Summary of supply and demand calculated by Realtor.com
 
 ## Known caveats (put these in your report)
 
